@@ -167,7 +167,7 @@ func TestMinMax(t *testing.T) {
 
 // Benchmark time taken to do one insert+delete with a pre-existing red-black
 // tree.
-func BenchmarkGrowth(b *testing.B) {
+func BenchmarkInsertDeleteGrowth(b *testing.B) {
 	top := 6
 	if testing.Short() {
 		top /= 2

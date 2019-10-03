@@ -43,3 +43,31 @@ func TestFuzzOutOrder(t *testing.T) {
 		}
 	}
 }
+
+// Benchmark time taken to traverse the entire red-black tree.
+func BenchmarkInOrderGrowth(b *testing.B) {
+	top := 6
+	if testing.Short() {
+		top /= 2
+	}
+
+	sizes := []int{256}
+	for i := 1; i < top; i++ {
+		sizes = append(sizes, sizes[i-1]*2)
+	}
+
+	for _, size := range sizes {
+		b.Run(strconv.Itoa(size), func(sub *testing.B) {
+			tree := New()
+			keys := generateKeys(size)
+			for _, key := range keys {
+				tree.Insert(key, nil)
+			}
+			sub.ResetTimer()
+			for i := 0; i < sub.N; i++ {
+				for in := tree.InOrder(); in.HasNext(); in.Next() {
+				}
+			}
+		})
+	}
+}

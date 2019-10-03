@@ -19,6 +19,8 @@ type outOrder struct {
 
 // InOrder gives an in-order traversal (RNL). The values will be sorted in
 // ascending order.
+//
+// Modifications to the tree during iteration will invalidate the traversal.
 func (r *RedBlackTree) InOrder() Traversal {
 	if r.root == nil {
 		return &inOrder{next: nil}
@@ -29,6 +31,8 @@ func (r *RedBlackTree) InOrder() Traversal {
 
 // OutOrder gives an out-order traversal (LNR). The values will be sorted in
 // descending order.
+//
+// Modifications to the tree during iteration will invalidate the traversal.
 func (r *RedBlackTree) OutOrder() Traversal {
 	if r.root == nil {
 		return &outOrder{next: nil}
@@ -53,13 +57,11 @@ func (t *inOrder) Next() (ret interface{}) {
 		return
 	}
 
-	for {
-		if t.next.parent == nil || t.next.parent.left == t.next {
-			t.next = t.next.parent
-			return
-		}
+	for t.next.parent != nil && t.next.parent.left != t.next {
 		t.next = t.next.parent
 	}
+	t.next = t.next.parent
+	return
 }
 
 func (t *outOrder) HasNext() bool {
@@ -78,11 +80,10 @@ func (t *outOrder) Next() (ret interface{}) {
 		return
 	}
 
-	for {
-		if t.next.parent == nil || t.next.parent.right == t.next {
-			t.next = t.next.parent
-			return
-		}
+	for t.next.parent != nil && t.next.parent.right != t.next {
 		t.next = t.next.parent
 	}
+
+	t.next = t.next.parent
+	return
 }
