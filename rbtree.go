@@ -6,15 +6,22 @@ const (
 	black = true
 )
 
+// Compare compares two values. Returns 0 if a==b, negative if a < b, and
+// positive a > b.
+type Compare func(a, b interface{}) int
+
 // RedBlackTree is a red-black tree.
 type RedBlackTree struct {
+	// Compare is used to compare values in the red-black tree for ordering.
+	Compare
+
 	root *node
 	size int
 }
 
 // New constructs an empty red-black tree.
-func New() *RedBlackTree {
-	return new(RedBlackTree)
+func New(compare Compare) *RedBlackTree {
+	return &RedBlackTree{Compare: compare}
 }
 
 // Size returns the size of the red-black tree in constant time.
@@ -41,7 +48,6 @@ func (r *RedBlackTree) Min() interface{} {
 }
 
 type node struct {
-	key                 int
 	value               interface{}
 	left, right, parent *node
 	color               bool

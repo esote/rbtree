@@ -1,8 +1,9 @@
 package rbtree
 
-// Search searches for a key in the tree. Returns the value found otherwise nil.
-func (r *RedBlackTree) Search(key int) interface{} {
-	ret := r.searchNode(key)
+// Search searches for a value in the tree. Returns the value found otherwise
+// nil.
+func (r *RedBlackTree) Search(value interface{}) interface{} {
+	ret := r.searchNode(value)
 
 	if ret == nil {
 		return nil
@@ -11,12 +12,14 @@ func (r *RedBlackTree) Search(key int) interface{} {
 	return ret.value
 }
 
-func (r *RedBlackTree) searchNode(key int) *node {
+func (r *RedBlackTree) searchNode(value interface{}) *node {
 	n := r.root
 	for n != nil {
-		if n.key == key {
+		cmp := r.Compare(value, n.value)
+		if cmp == 0 {
 			break
-		} else if key < n.key {
+		}
+		if cmp < 0 {
 			n = n.left
 		} else {
 			n = n.right

@@ -7,10 +7,10 @@ import (
 )
 
 func TestFuzzInOrder(t *testing.T) {
-	tree := New()
+	tree := New(compare)
 	keys := generateKeys(512)
 	for _, key := range keys {
-		tree.Insert(key, strconv.Itoa(key))
+		tree.Insert(key)
 	}
 	sort.Ints(keys)
 
@@ -19,17 +19,17 @@ func TestFuzzInOrder(t *testing.T) {
 		if i >= len(keys) {
 			t.Fatal("fuzz in order HasNext failed")
 		}
-		if inOrder.Next() != strconv.Itoa(keys[i]) {
+		if inOrder.Next() != keys[i] {
 			t.Fatal("fuzz in order bad val")
 		}
 	}
 }
 
 func TestFuzzOutOrder(t *testing.T) {
-	tree := New()
+	tree := New(compare)
 	keys := generateKeys(512)
 	for _, key := range keys {
-		tree.Insert(key, strconv.Itoa(key))
+		tree.Insert(key)
 	}
 	sort.Sort(sort.Reverse(sort.IntSlice(keys)))
 
@@ -38,7 +38,7 @@ func TestFuzzOutOrder(t *testing.T) {
 		if i >= len(keys) {
 			t.Fatal("fuzz out order HasNext failed")
 		}
-		if outOrder.Next() != strconv.Itoa(keys[i]) {
+		if outOrder.Next() != keys[i] {
 			t.Fatal("fuzz out order bad val")
 		}
 	}
@@ -58,10 +58,10 @@ func BenchmarkInOrderGrowth(b *testing.B) {
 
 	for _, size := range sizes {
 		b.Run(strconv.Itoa(size), func(sub *testing.B) {
-			tree := New()
+			tree := New(compare)
 			keys := generateKeys(size)
 			for _, key := range keys {
-				tree.Insert(key, nil)
+				tree.Insert(key)
 			}
 			sub.ResetTimer()
 			for i := 0; i < sub.N; i++ {

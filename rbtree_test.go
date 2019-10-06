@@ -10,7 +10,15 @@ import (
 	"time"
 )
 
-const value = "hi"
+func compare(a, b interface{}) int {
+	if a.(int) == b.(int) {
+		return 0
+	}
+	if a.(int) < b.(int) {
+		return -1
+	}
+	return 1
+}
 
 func TestMain(m *testing.M) {
 	seed := time.Now().UnixNano()
@@ -45,60 +53,35 @@ func TestFuzz(t *testing.T) {
 		sizes = append(sizes, rand.Intn(max)+1)
 	}
 
-	const (
-		fuzzNoErr = iota
-		fuzzSize
-		fuzzDelete
-	)
-
 	for _, size := range sizes {
 		for i := 0; i < count; i++ {
-			tree := New()
+			tree := New(compare)
 			keys := generateKeys(size)
 
 			for _, key := range keys {
-				tree.Insert(key, value+strconv.Itoa(key))
+				if !tree.Insert(key) {
+					// keys contained duplicates
+					continue
+				}
 			}
-
-			var fuzzState = fuzzNoErr
 
 			// Size
 			if tree.Size() != size {
-				fuzzState = fuzzSize
-				goto checkDups
+				t.Fatalf("fuzz %d:%d size incorrect", size, i)
 			}
 
 			// Search
 			for _, key := range keys {
-				if search := tree.Search(key); search == nil {
-					t.Fatalf("fuzz %d:%d no key", size, i)
-				} else if search != value+strconv.Itoa(key) {
-					t.Fatalf("fizz %d:%d bad val", size, i)
+				if tree.Search(key) != key {
+					t.Fatalf("fuzz %d:%d search bad val",
+						size, i)
 				}
 			}
 
 			// Delete
 			for _, key := range keys {
-				if deleted := tree.Delete(key); deleted == nil {
-					fuzzState = fuzzDelete
-					goto checkDups
-				} else if deleted != value+strconv.Itoa(key) {
-					t.Fatalf("fuzz %d:%d bad val", size, i)
-				}
-			}
-
-		checkDups:
-			if fuzzState != fuzzNoErr {
-				if hasDuplicates(t, keys) {
-					continue
-				}
-
-				switch fuzzState {
-				case fuzzSize:
-					t.Fatalf("fuzz %d:%d size incorrect",
-						size, i)
-				case fuzzDelete:
-					t.Fatalf("fuzz %d:%d delete incorrect",
+				if tree.Delete(key) != key {
+					t.Fatalf("fuzz %d:%d delete bad val",
 						size, i)
 				}
 			}
@@ -107,7 +90,7 @@ func TestFuzz(t *testing.T) {
 }
 
 func TestDeleteNonexistent(t *testing.T) {
-	tree := New()
+	tree := New(compare)
 
 	if tree.Delete(0) != nil {
 		t.Fatal("deleted nonexistent key")
@@ -115,24 +98,24 @@ func TestDeleteNonexistent(t *testing.T) {
 }
 
 func TestInsertDuplicate(t *testing.T) {
-	tree := New()
+	tree := New(compare)
 
-	if !tree.Insert(0, value) {
+	if !tree.Insert(0) {
 		t.Fatal("first insert failed")
 	}
-	if tree.Insert(0, value) {
+	if tree.Insert(0) {
 		t.Fatal("second insert succeeded")
 	}
 }
 
 func TestSize(t *testing.T) {
-	tree := New()
+	tree := New(compare)
 
 	const size int = 100
 	keys := generateKeys(size)
 
 	for _, key := range keys {
-		tree.Insert(key, value)
+		tree.Insert(key)
 	}
 
 	if tree.Size() != size {
@@ -149,12 +132,20 @@ func TestSize(t *testing.T) {
 }
 
 func TestMinMax(t *testing.T) {
-	tree := New()
-	tree.Insert(0, "c")
-	tree.Insert(1, "d")
-	tree.Insert(-1, "b")
-	tree.Insert(2, "e")
-	tree.Insert(-2, "a")
+	tree := New(func(a, b interface{}) int {
+		if a.(string) == b.(string) {
+			return 0
+		}
+		if a.(string) < b.(string) {
+			return -1
+		}
+		return 1
+	})
+	tree.Insert("c")
+	tree.Insert("e")
+	tree.Insert("d")
+	tree.Insert("a")
+	tree.Insert("b")
 
 	if tree.Max() != "e" {
 		t.Fatal("wrong max")
@@ -180,14 +171,14 @@ func BenchmarkInsertDeleteGrowth(b *testing.B) {
 
 	for _, size := range sizes {
 		b.Run(strconv.Itoa(size), func(sub *testing.B) {
-			tree := New()
+			tree := New(compare)
 			keys := generateKeys(size)
 			for i := 0; i < size-1; i++ {
-				tree.Insert(keys[i], nil)
+				tree.Insert(keys[i])
 			}
 			sub.ResetTimer()
 			for i := 0; i < sub.N; i++ {
-				tree.Insert(keys[size-1], nil)
+				tree.Insert(keys[size-1])
 				tree.Delete(keys[size-1])
 			}
 		})
@@ -207,20 +198,4 @@ func generateKeys(n int) []int {
 	}
 
 	return ret
-}
-
-// Check if array has duplicates. This could be done with a map, but for large
-// lists it will allocate too much memory. Calling this function is very rare
-// since the key range is so large.
-func hasDuplicates(t *testing.T, keys []int) bool {
-	for i := range keys {
-		for j := range keys {
-			if keys[i] == keys[j] && i != j {
-				t.Logf("keys len %d had duplicates", len(keys))
-				return true
-			}
-		}
-	}
-
-	return false
 }

@@ -7,13 +7,23 @@ import (
 )
 
 func ExampleRedBlackTree_InOrder() {
-	tree := rbtree.New()
+	cmp := func(a, b interface{}) int {
+		if a.(uint8) == b.(uint8) {
+			return 0
+		}
+		if a.(uint8) < b.(uint8) {
+			return -1
+		}
+		return 1
+	}
+
+	tree := rbtree.New(cmp)
 
 	str := "alphabet"
 
 	// Inserting into the red-black tree will remove duplicate letters.
-	for _, c := range str {
-		tree.Insert(int(c), c)
+	for i := range str {
+		tree.Insert(str[i])
 	}
 
 	for order := tree.InOrder(); order.HasNext(); {

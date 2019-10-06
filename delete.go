@@ -1,9 +1,9 @@
 package rbtree
 
-// Delete key from red-black tree. Returns the value deleted or nil if no value
-// was value with key was found.
-func (r *RedBlackTree) Delete(key int) interface{} {
-	n := r.searchNode(key)
+// Delete value from the red-black tree. Returns the value deleted or nil if no
+// value was found.
+func (r *RedBlackTree) Delete(value interface{}) interface{} {
+	n := r.searchNode(value)
 
 	if n == nil {
 		return nil
@@ -13,7 +13,6 @@ func (r *RedBlackTree) Delete(key int) interface{} {
 
 	if n.left != nil && n.right != nil {
 		max := n.left.max()
-		n.key = max.key
 		n.value = max.value
 		n = max
 	}
@@ -33,7 +32,6 @@ func (r *RedBlackTree) Delete(key int) interface{} {
 
 	r.replace(n, child)
 	r.size--
-
 	return ret
 }
 

@@ -1,35 +1,33 @@
 package rbtree
 
-// Insert key into red-black tree. Returns true if a new value was inserted,
-// false if the value already existed with key.
-func (r *RedBlackTree) Insert(key int, value interface{}) bool {
-	inserted := &node{
-		key:   key,
-		value: value,
-	}
+// Insert value into the red-black tree. Returns whether a new value was
+// inserted.
+func (r *RedBlackTree) Insert(value interface{}) bool {
+	inserted := &node{value: value}
 
 	if r.root == nil {
 		r.root = inserted
 	} else {
 		n := r.root
 		for {
-			if key == n.key {
+			cmp := r.Compare(value, n.value)
+			if cmp == 0 {
 				return false
-			} else if key < n.key {
+			}
+			if cmp < 0 {
 				if n.left == nil {
 					n.left = inserted
 					break
-				} else {
-					n = n.left
 				}
+				n = n.left
 			} else {
 				if n.right == nil {
 					n.right = inserted
 					break
-				} else {
-					n = n.right
 				}
+				n = n.right
 			}
+
 		}
 		inserted.parent = n
 	}
